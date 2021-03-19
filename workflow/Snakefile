@@ -1,0 +1,103 @@
+#snakemake-demo-rnaseq
+#Christopher Sifuentes sifuentescj@gmail.com
+
+#import modules
+from __future__ import print_function, absolute_import, division
+from argparse import Namespace
+import collections
+from collections import defaultdict
+import csv
+from functools import partial
+from functools import reduce
+import hashlib
+import os
+from os.path import basename
+from os.path import isfile
+from os.path import join
+from os.path import splitext
+import shutil
+import sys
+import subprocess
+import yaml
+import snakemake
+
+#singularity OS
+# singularity: 'docker://continuumio/miniconda3:4.5.12'
+
+configfile: "config/config.yaml"
+
+#input
+INPUT_DIR = os.path.join(config['input_dir']['fastq'],'')
+
+#make other dir names
+ANALYSIS_DIR = os.path.join(config['out_dir'],'')
+QC_DIR = os.path.join(ANALYSIS_DIR, 'QC', '')
+TRIM_DIR = os.path.join(ANALYSIS_DIR, 'TRIM','')
+
+#define file base names and sample base names
+FILES = ['lymphnode4a_1', 'lung3e_1', 'lung3e_2', 'lymphnode4a_2']
+SAMPLES = ['lung3e', 'lymphnode4a']
+
+#define final outputs
+rule all:
+    input:
+        [expand('{directory}{sample}{extension}',
+                  directory = QC_DIR,
+                  sample = FILES,
+                  extension = '_fastqc.zip'),
+        expand('{directory}{sample}{extension}',
+                  directory = TRIM_DIR,
+                  sample = FILES,
+                  extension = '.trimmed.fastq')]
+
+#fastqc
+rule fastqc:
+    input:
+        fastq = INPUT_DIR + '{sample}.fastq.gz',
+    output:
+        fastq = QC_DIR + '{sample}_fastqc.zip',
+    params:
+        qc_dir = QC_DIR,
+        format = 'fastq',
+    conda:
+        'envs/fastqc_env.yml'
+    threads:
+        config['thread_info']['fastqc']
+    shell:
+        """
+        mkdir -p {params.qc_dir}
+        fastqc \
+        --noextract \
+        -f {params.format} \
+        -o {params.qc_dir} \
+        -t {threads} \
+        {input}
+        """
+
+#fastp
+rule fastp_trim:
+    input:
+        r1 = INPUT_DIR + '{sample}_1.fastq.gz',
+        r2 = INPUT_DIR + '{sample}_2.fastq.gz'
+    output:
+        r1 = TRIM_DIR + '{sample}_1.trimmed.fastq',
+        r2 = TRIM_DIR + '{sample}_2.trimmed.fastq'
+    params:
+        trimq = config['trim']['trimq'],
+        minlen = config['trim']['minlen'],
+    conda:
+        'envs/fastp_env.yml'
+    threads:
+        config['thread_info']['trim']
+    shell:
+        """
+        fastp \
+        -i {input.r1} \
+        -I {input.r2} \
+        -o {output.r1} \
+        -O {output.r2} \
+        -w {threads} \
+        -G \
+        -l {params.minlen} \
+        -q {params.trimq}
+        """

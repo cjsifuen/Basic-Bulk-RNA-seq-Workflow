@@ -1,0 +1,9 @@
+# log file
+log*
+
+# snakemake files
+.snakemake*
+
+# mac files
+.DS*
+*/.DS*
