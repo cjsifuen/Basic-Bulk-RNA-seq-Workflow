@@ -7,8 +7,10 @@ from argparse import Namespace
 import collections
 from collections import defaultdict
 import csv
+import fnmatch
 from functools import partial
 from functools import reduce
+import glob
 import hashlib
 import os
 from os.path import basename
@@ -21,41 +23,55 @@ import subprocess
 import yaml
 import snakemake
 
-#singularity OS
-# singularity: 'docker://continuumio/miniconda3:4.5.12'
-
+# set configuration file
 configfile: "config/config.yaml"
 
-#input
+# define input directory from config
 INPUT_DIR = os.path.join(config['input_dir']['fastq'],'')
 
-#make other dir names
-ANALYSIS_DIR = os.path.join(config['out_dir'],'')
-QC_DIR = os.path.join(ANALYSIS_DIR, 'QC', '')
-TRIM_DIR = os.path.join(ANALYSIS_DIR, 'TRIM','')
+# define analysis directory and other directories
+SNK_DIR = os.path.dirname(srcdir("Snakefile"))
+SCRIPT_DIR = os.path.join(SNK_DIR,'scripts','')
+OUT_DIR = os.path.join(config['out_dir'],'')
+QC_DIR = os.path.join(OUT_DIR, 'QC','')
+TRIM_DIR = os.path.join(OUT_DIR, 'TRIM', '')
+ALN_DIR = os.path.join(OUT_DIR, 'ALIGN', '')
+COUNTS_DIR = os.path.join(OUT_DIR, 'COUNTS', '')
+DIFFEX_DIR = os.path.join(OUT_DIR, 'DIFFEX','')
 
-#define file base names and sample base names
-FILES = ['lymphnode4a_1', 'lung3e_1', 'lung3e_2', 'lymphnode4a_2']
-SAMPLES = ['lung3e', 'lymphnode4a']
+#define lists of files and sample basenames
+FILES = [os.path.basename(x) for x in glob.glob(INPUT_DIR + '*.fastq')]
+FILES_BASE = [os.path.basename(x).split('.fastq')[0] for x in glob.glob(INPUT_DIR + '*.fastq')]
+SAMPLES = [os.path.basename(x).split('_1.fastq')[0] for x in fnmatch.filter(FILES, '*_1.fastq')]
 
 #define final outputs
 rule all:
     input:
         [expand('{directory}{sample}{extension}',
-                  directory = QC_DIR,
-                  sample = FILES,
-                  extension = '_fastqc.zip'),
+               directory = QC_DIR,
+               sample = FILES_BASE,
+               extension = '_fastqc.zip'),
         expand('{directory}{sample}{extension}',
-                  directory = TRIM_DIR,
-                  sample = FILES,
-                  extension = '.trimmed.fastq')]
+               directory = TRIM_DIR,
+               sample = SAMPLES,
+               extension = ['_val_1.fq', '_val_2.fq']),
+        expand('{directory}{sample}{extension}',
+               directory = ALN_DIR,
+               sample = SAMPLES,
+               extension = 'Aligned.sortedByCoord.out.bam'),
+        COUNTS_DIR + 'counts.txt',
+        COUNTS_DIR + 'counts_fixed.txt',
+        expand('{directory}{prefix}{extension}',
+                        directory=DIFFEX_DIR,
+                        prefix=config['diffex_info']['prefix'],
+                        extension=['_normCounts.txt','_results.txt','_sigdiff.txt','_vstCounts.txt'])]
 
 #fastqc
 rule fastqc:
     input:
-        fastq = INPUT_DIR + '{sample}.fastq.gz',
+        fastq = INPUT_DIR + '{sample}.fastq'
     output:
-        fastq = QC_DIR + '{sample}_fastqc.zip',
+        fastq = QC_DIR + '{sample}_fastqc.zip'
     params:
         qc_dir = QC_DIR,
         format = 'fastq',
@@ -71,33 +87,139 @@ rule fastqc:
         -f {params.format} \
         -o {params.qc_dir} \
         -t {threads} \
-        {input}
+        {input.fastq}
         """
 
-#fastp
-rule fastp_trim:
+#trim_galore
+rule trim_galore:
     input:
-        r1 = INPUT_DIR + '{sample}_1.fastq.gz',
-        r2 = INPUT_DIR + '{sample}_2.fastq.gz'
+        r1 = INPUT_DIR + '{sample}_1.fastq',
+        r2 = INPUT_DIR + '{sample}_2.fastq'
     output:
-        r1 = TRIM_DIR + '{sample}_1.trimmed.fastq',
-        r2 = TRIM_DIR + '{sample}_2.trimmed.fastq'
-    params:
-        trimq = config['trim']['trimq'],
-        minlen = config['trim']['minlen'],
+        r1 = TRIM_DIR + '{sample}_val_1.fq',
+        r2 = TRIM_DIR + '{sample}_val_2.fq',
     conda:
-        'envs/fastp_env.yml'
-    threads:
-        config['thread_info']['trim']
+        'envs/trim_galore_env.yml'
+    params:
+        length = config['trim_info']['length'],
+        quality = config['trim_info']['quality'],
+        base = '{sample}',
+        out_dir = TRIM_DIR
     shell:
         """
-        fastp \
-        -i {input.r1} \
-        -I {input.r2} \
-        -o {output.r1} \
-        -O {output.r2} \
-        -w {threads} \
-        -G \
-        -l {params.minlen} \
-        -q {params.trimq}
+        trim_galore \
+        -q {params.quality} \
+        --length {params.length} \
+        --basename {params.base} \
+        -o {params.out_dir} \
+        --paired {input.r1} {input.r2}
+        """
+
+#star
+rule star:
+    input:
+        r1 = TRIM_DIR + '{sample}_val_1.fq',
+        r2 = TRIM_DIR + '{sample}_val_2.fq'
+    output:
+        bam = ALN_DIR + '{sample}Aligned.sortedByCoord.out.bam',
+    conda:
+        'envs/star_env.yml'
+    params:
+        out_prefix = ALN_DIR + '{sample}',
+        index = config['input_dir']['genome_fasta'],
+        gtf = config['input_dir']['genome_gtf']
+    threads:
+        config['thread_info']['align'],
+    shell:
+        """
+        STAR \
+        --genomeDir {params.index} \
+        --readFilesIn {input.r1} {input.r2} \
+        --sjdbGTFfile {params.gtf} \
+        --outFileNamePrefix {params.out_prefix} \
+        --runThreadN {threads} \
+        --outSAMattributes Standard \
+        --outSAMtype BAM SortedByCoordinate \
+        --outFilterMismatchNmax 999 \
+        --alignSJoverhangMin 8 \
+        --alignSJDBoverhangMin 1 \
+        --outFilterMismatchNoverReadLmax 0.04 \
+        --alignIntronMin 20 \
+        --alignIntronMax 1000000 \
+        --alignMatesGapMax 1000000 \
+        --sjdbScore 1
+        """
+
+#featureCounts
+rule featureCounts:
+    input:
+        bams = sorted(expand('{directory}{sample}{extension}',
+                      directory=ALN_DIR,
+                      sample=SAMPLES,
+                      extension='Aligned.sortedByCoord.out.bam')),
+    output:
+        counts = COUNTS_DIR + 'counts.txt',
+        tmp = temp(COUNTS_DIR + 'counts.tmp'),
+    conda:
+        'envs/subread_env.yml'
+    params:
+        strand = config['count_info']['strand'],
+        gtf = config['input_dir']['genome_gtf']
+    threads:
+        config['thread_info']['counts']
+    shell:
+        """
+        featureCounts \
+        -O \
+        -p \
+        -B \
+        -C \
+        -T {threads} \
+        -s {params.strand} \
+        -a {params.gtf} \
+        -o {output.tmp} \
+        {input.bams}
+
+        sed '/^#/d' {output.tmp} | cut -f 1,7- > {output.counts}
+        """
+
+#clean couts
+rule clean_counts:
+    input:
+        counts = COUNTS_DIR + 'counts.txt',
+    output:
+        counts = COUNTS_DIR + 'counts_fixed.txt',
+    run:
+        #import modules
+        import pandas as pd
+        import os
+
+        #read in counts file
+        counts_df = pd.read_csv(filepath_or_buffer=input.counts, sep='\t', header=0)
+
+        #grab column names, remove path and extension to get desired basenames of files
+        fixed_names = [os.path.basename(x).split('Aligned.sortedByCoord.out.bam')[0] for x in counts_df.columns]
+
+        #reassign column values of df
+        counts_df.columns = fixed_names
+
+        #write out to fixed file
+        counts_df.to_csv(path_or_buf=output.counts, sep = '\t', index=False, header=True)
+
+#DESeq2
+rule deseq2:
+    input:
+        counts = COUNTS_DIR + 'counts_fixed.txt'
+    output:
+        diffex = expand('{directory}{prefix}{extension}',
+                        directory=DIFFEX_DIR,
+                        prefix=config['diffex_info']['prefix'],
+                        extension=['_normCounts.txt','_results.txt','_sigdiff.txt','_vstCounts.txt'])
+    params:
+        out_prefix = DIFFEX_DIR + config['diffex_info']['prefix'],
+        script = SCRIPT_DIR + 'DESeq2.R',
+        metadata = config['diffex_info']['metadata']
+    shell:
+        """
+        Rscript {params.script} {params.metadata} {input.counts} {params.out_prefix}
         """
