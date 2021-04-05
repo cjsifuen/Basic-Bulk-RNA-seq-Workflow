@@ -4,72 +4,72 @@
 IN_DIR='/Users/csifuentes/Documents/testData/simulated_reads/fastq'
 GENOME_FASTA='/Users/csifuentes/Documents/testData/index/'
 GENOME_GTF='/Users/csifuentes/Documents/testData/index/Homo_sapiens.GRCh38.103.gtf'
-OUT_DIR='/Users/csifuentes/Documents/outData/'
-QC_DIR='/Users/csifuentes/Documents/outData/QC'
-TRIM_DIR='/Users/csifuentes/Documents/outData/TRIMMED'
+OUT_DIR='/Users/csifuentes/Documents/outDataOfficeHours/'
+QC_DIR='/Users/csifuentes/Documents/outDataOfficeHours/QC'
+TRIM_DIR='/Users/csifuentes/Documents/outDataOfficeHours/TRIMMED'
 TRIM_LENGTH='20'
 TRIM_QUALITY='30'
-ALN_DIR='/Users/csifuentes/Documents/outData/ALIGN/'
+ALN_DIR='/Users/csifuentes/Documents/outDataOfficeHours/ALIGN/'
 STRAND='0'
-COUNTS_DIR='/Users/csifuentes/Documents/outData/COUNTS/'
-ANNOT_TMP='/Users/csifuentes/Documents/outData/COUNTS/counts.tmp'
-ANNOT_OUT='/Users/csifuentes/Documents/outData/COUNTS/counts.txt'
-COUNTS_FIXED='/Users/csifuentes/Documents/outData/COUNTS/counts_fixed.txt'
+COUNTS_DIR='/Users/csifuentes/Documents/outDataOfficeHours/COUNTS/'
+ANNOT_TMP='/Users/csifuentes/Documents/outDataOfficeHours/COUNTS/counts.tmp'
+ANNOT_OUT='/Users/csifuentes/Documents/outDataOfficeHours/COUNTS/counts.txt'
+COUNTS_FIXED='/Users/csifuentes/Documents/outDataOfficeHours/COUNTS/counts_fixed.txt'
 SCRIPT='/Users/csifuentes/Documents/repo/snakemake-demo-rnaseq/bash_workflow/DESeq2.R'
 METADATA='/Users/csifuentes/Documents/repo/snakemake-demo-rnaseq/bash_workflow/metadata.txt'
 OUTPREFIX='WT_vs_KO'
-DIFFEX_DIR='/Users/csifuentes/Documents/outData/DIFFEX/'
+DIFFEX_DIR='/Users/csifuentes/Documents/outDataOfficeHours/DIFFEX/'
 
-###
-#fastqc
-###
+# ###
+# #fastqc
+# ###
 
-#activate conda env
-conda init bash
-source ~/.bash_profile
-conda activate fastqc_env
+# #activate conda env
+# conda init bash
+# source ~/.bash_profile
+# conda activate fastqc_env
 
-#make output directory
-mkdir -p ${QC_DIR}
+# #make output directory
+# mkdir -p ${QC_DIR}
 
-#fastqc on each file
-for i in ${IN_DIR}/*.fastq;
-do BASE=$(basename ${i} '.fastq');
-    echo ${BASE};
-    fastqc \
-    -o ${QC_DIR} \
-    --noextract \
-    -f fastq \
-    -t 4 \
-    ${i};
-done
+# #fastqc on each file
+# for i in ${IN_DIR}/*.fastq;
+# do BASE=$(basename ${i} '.fastq');
+#     echo ${BASE};
+#     fastqc \
+#     -o ${QC_DIR} \
+#     --noextract \
+#     -f fastq \
+#     -t 4 \
+#     ${i};
+# done
 
-#deactivate environment
-conda deactivate
+# #deactivate environment
+# conda deactivate
 
 
-###
-#trimgalore!
-###
+# ###
+# #trimgalore!
+# ###
 
-#activate conda env
-source ~/.bash_profile
-conda activate trim_galore_env
+# #activate conda env
+# source ~/.bash_profile
+# conda activate trim_galore_env
 
-#trimgalore! on each file
-for i in ${IN_DIR}/*_1.fastq;
-do BASE=$(basename ${i} '_1.fastq');
-    echo ${BASE};
-    trim_galore \
-    -q ${TRIM_QUALITY} \
-    --length ${TRIM_LENGTH} \
-    --basename ${BASE} \
-    -o ${TRIM_DIR} \
-    --paired ${IN_DIR}/${BASE}_1.fastq ${IN_DIR}/${BASE}_2.fastq;
-done
+# #trimgalore! on each file
+# for i in ${IN_DIR}/*_1.fastq;
+# do BASE=$(basename ${i} '_1.fastq');
+#     echo ${BASE};
+#     trim_galore \
+#     -q ${TRIM_QUALITY} \
+#     --length ${TRIM_LENGTH} \
+#     --basename ${BASE} \
+#     -o ${TRIM_DIR} \
+#     --paired ${IN_DIR}/${BASE}_1.fastq ${IN_DIR}/${BASE}_2.fastq;
+# done
 
-# deactivate environment
-conda deactivate
+# # deactivate environment
+# conda deactivate
 
 ###
 #star
@@ -116,7 +116,6 @@ conda activate subread_env
 mkdir -p ${COUNTS_DIR}
 
 #featureCounts on all files together
-BAMS=(`ls ${ALN_DIR}*Aligned.sortedByCoord.out.bam`)
 featureCounts \
     -O \
     -p \
@@ -145,12 +144,12 @@ echo >> ${COUNTS_FIXED}
 tail -n+2 ${ANNOT_OUT} >> ${COUNTS_FIXED}
 
 
-###
-#DESeq2
-###
+# ###
+# #DESeq2
+# ###
 
-# make directory
-mkdir -p ${DIFFEX_DIR}
+# # make directory
+# mkdir -p ${DIFFEX_DIR}
 
-# run deseq2 script
-Rscript ${SCRIPT} ${METADATA} ${COUNTS_FIXED} ${DIFFEX_DIR}${OUTPREFIX}
+# # run deseq2 script
+# Rscript ${SCRIPT} ${METADATA} ${COUNTS_FIXED} ${DIFFEX_DIR}${OUTPREFIX}

@@ -24,7 +24,7 @@ import yaml
 import snakemake
 
 # set configuration file
-configfile: "config/config.yaml"
+configfile: "workflow/resources/config.yaml"
 
 # define input directory from config
 INPUT_DIR = os.path.join(config['input_dir']['fastq'],'')
