@@ -80,6 +80,45 @@ mamba create -c conda-forge -c bioconda -n snakemake_env snakemake
 
 ![alt text](https://github.com/cjsifuen/Basic-Bulk-RNA-seq-Workflow/blob/main/DownloadZip.png?raw=true)
 
+6. Move the downloaded file `Basic-Bulk-RNA-seq-Workflow-main.zip` to where you want to work, and unzip (right-click and extract or unzip, or double-clicking usually works).
+
+7. If you have not installed R, install it from here: https://rstudio-education.github.io/hopr/starting.html#how-to-download-and-install-r. You can check for an R installation by opening the terminal and typing `R --version`, followed by the enter key. If R is installed the version number and other information will be shown.  
+
+```
+$ R --version
+R version 4.0.3 (2020-10-10) -- "Bunny-Wunnies Freak Out"
+Copyright (C) 2020 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under the terms of the
+GNU General Public License versions 2 or 3.
+For more information about these matters see
+https://www.gnu.org/licenses/.
+```
+
+8. Install `DESeq2` in R in your `snakemake_env` by first activating the `snakemake_env`. Then follow the installation instructions here: https://bioconductor.org/packages/release/bioc/html/DESeq2.html.
+
+```
+# activate the environment
+conda activate snakemake_env
+``` 
+
+```
+# open R
+R
+```
+
+```
+# install DESeq2
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("DESeq2")
+```
+9. Exit `R`  by typing `q()`, followed by enter. Select `n` for no. Everything should be ready.
+
 [Table of Contents](#toc)
 
 ## Usage:
+
