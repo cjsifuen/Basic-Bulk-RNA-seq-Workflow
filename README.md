@@ -23,12 +23,13 @@ A couple of advantages of the `Snakemake` version.
 - And more...
 
 **Steps performed:**
-- Initial read QC with `FastQC`  
-- Filter, trim reads with `TrimGalore!`  
-- Align reads with `STAR`  
-- Abundance quantification with `featureCounts` from `Subread`  
-- _Pair-wise_ differential expression analysis with `DESeq2`
-
+| Step                                         | Software/Tool                  |
+|----------------------------------------------|--------------------------------|
+| Initial read QC                              | `FastQC`                       |
+| Filter, trim reads                           | `TrimGalore!`                  |
+| Align reads                                  | `STAR`                         |
+| Abundance quantification                     | `featureCounts` from `Subread` |
+| _Pair-wise_ differential expression analysis | `DESeq2`                       |   
 
 The `Snakemake` workflow structure
 ```
