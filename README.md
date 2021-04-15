@@ -76,6 +76,10 @@ conda install -n base conda-forge mamba
 conda activate base
 mamba create -c conda-forge -c bioconda -n snakemake_env snakemake
 ```
+5. Go to https://github.com/cjsifuen/Basic-Bulk-RNA-seq-Workflow. Click the green `Code` button on the top-right side of the page, and select `Download ZIP`. 
+
+![alt text](https://github.com/cjsifuen/Basic-Bulk-RNA-seq-Workflow/blob/master/image.jpg?raw=true)
+
 
 [Table of Contents](#toc)
 
