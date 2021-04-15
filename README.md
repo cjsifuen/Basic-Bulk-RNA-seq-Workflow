@@ -22,7 +22,7 @@ A couple of advantages of the `Snakemake` version.
 - With the use of a `config.yaml` file, need only to edit a single file to run a new analysis
 - And more...
 
-**Steps performed:**
+**Steps performed**
 | Step                                         | Software/Tool                  |
 |----------------------------------------------|--------------------------------|
 | Initial read QC                              | `FastQC`                       |
@@ -31,7 +31,7 @@ A couple of advantages of the `Snakemake` version.
 | Abundance quantification                     | `featureCounts` from `Subread` |
 | _Pair-wise_ differential expression analysis | `DESeq2`                       |   
 
-The `Snakemake` workflow structure
+**The `Snakemake` workflow structure**
 ```
 $ tree workflow
 workflow
@@ -48,7 +48,7 @@ workflow
     └── DESeq2.R
 ```
 
-A brief description of the files within the workflow
+**A brief description of the files within the workflow**
 
 | File Name         | Description                                                                                                                                                                                                                                                                                                  |
 |-------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -56,7 +56,54 @@ A brief description of the files within the workflow
 | `*_env.yml` files | `.yaml` file that describes all software to be used by `conda`/`mamba` to create a computational environment, including the versions and all of the dependencies.                                                                                                                                            |
 | `config.yaml`     | Configuration `.yaml` file holding values that we want to pass to the pipeline for anything we might want to change between runs of the pipeline, such as input file directories, parameter values, choices in trimming tools, etc.                                                                          |
 | `metadata.txt`    | Tab-separated file containing `sample_id` and `expt` columns to be filled with the sample ids/names and their experimental group, respectively. The column names should remain unchanged. This file is used by `DESeq2` to perform a pair-wise differential expression analysis (single factor, two levels). |
-| `DESeq2.R`        | R script that performs the differntial expression analysis.                                                                                                                                                                                                                                                  |
+| `DESeq2.R`        | R script that performs the differntial expression analysis.                                                                                                                                                                                                                                                  |  
+
+
+**`config.yaml`** File Field Descriptions and Example
+
+|Field|Description|Format|
+|-----|-----------|------|
+|`out_dir:`|Directory to output all results. Does not need to exist yet.|Full path to directory|
+|(input_dir) `fastq:`|Directory containing input reads|Full path to directory|
+|(input_dir) `genome_fasta:`|Directory containing `STAR` index files|Full path to directory|
+|(input_dir) `genome_gtf:`|GTF file used to build the `STAR` index|Full path to file|
+|(thread_info) `fastqc:`| Number of threads to use for each `FastQC` job |Integer |
+|(thread_info) `align:` |Number of threads to use for each `STAR` job|Integer|
+|(thread_info) `counts:` |Number of threads to use for each `featureCounts` job|Integer |
+|(trim_info) `length:`|Shortest length a read can be after trimming, will toss read otherwise | Integer|
+|(trim_info) `quality:`|Trim bases where quality is below this value | Integer|
+|(count_info) `strand:`|Strandedness of library preparation (0=unstranded, 1=forward, 2=reverse)| Integer|
+|(diffex_info) `prefix:`|String to use as a prefix for output in differential expression analysis file |Quoted string |
+| (diffex_info) `metadata:`|File containing samples and group assignment for differential expression analysis |Full path to tab-separated `.txt` file|
+
+Example `config.yaml`
+
+    out_dir:
+        '/Users/csifuentes/Documents/outDataSnakemakeOfficeHours'
+    input_dir:
+        fastq: '/Users/csifuentes/Documents/testData/simulated_reads/fastq'
+        genome_fasta: '/Users/csifuentes/Documents/testData/index/'
+        genome_gtf: '/Users/csifuentes/Documents/testData/index/Homo_sapiens.GRCh38.103.gtf'
+    thread_info:
+        fastqc: 4
+        align: 4
+        counts: 4
+    trim_info:
+        length: 20
+        quality: 30
+    count_info:
+        strand: 0
+    diffex_info:
+        prefix: 'WT_vs_KO'
+        metadata: '/Users/csifuentes/Documents/repo/snakemake-demo-rnaseq/workflow/resources/metadata.txt'
+
+
+
+**Key Assumptions**
+- Files end in `.fastq`, and are unzipped.
+- Paired-end reads, with `_1.fastq` and `_2.fastq` as the suffix.
+- Only 2 groups to compare (WT vs KO, or T0 vs T24, etc.)
+
 
 [Table of Contents](#toc)
 
@@ -123,3 +170,55 @@ BiocManager::install("DESeq2")
 
 ## Usage:
 
+1. Edit the `config.yaml` file, described above in [description](#Description). Note the key assumptions being made about these data/files.
+2. Edit the `metadata.txt` file.
+3. Open the terminal and activate the `snakemake_env`
+```
+conda activate snakemake_env
+```
+4. Change into the directory containing the unzipped repository. If I downloaded the repository to my `Downloads` directory and unzipped it there, I would type
+```
+cd /Users/csifuentes/Downloads/Basic-Bulk-RNA-seq-Workflow-main
+```
+5. Test the pipeline to make sure everything looks okay.  
+
+```
+snakemake -n
+```
+Should produce the following (as well as a larger block of text). This shows the number of jobs that will be run for each rule. So, for 6 samples, we have 12 `fastq` files (since they are paried). Thus, I should see 12 `fastqc` jobs that need to be performed. I should also see 6 `star` jobs for alignment. I see these below. Everything looks good so I can continue to run the analyis.
+```
+Job counts:
+	count	jobs
+	1	all
+	1	clean_counts
+	1	deseq2
+	12	fastqc
+	1	featureCounts
+	6	star
+	6	trim_galore
+	28
+This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.
+```
+Check that the number of `fastqc` run
+
+6. Run the pipeline. Some useful parameters are shown below.
+
+| Flag / option             | Purpose                                                                 | Required? |
+|---------------------------|-------------------------------------------------------------------------|-----------|
+| `snakemake`               | Calls snakemake                                                         | Yes       |
+| `--use-conda`             | Install the necessary software in temporary environments, using `conda` | Yes       |
+| `--conda-frontend mamba`  | Use `mamba` to install the software, which will be faster               | No        |
+| `--cores 8`               | Use up to 8 threads                                                     | No        |
+| `-p`                      | Print the actual command to the screen                                  | No        |
+| `-p 2>&1 \| tee log.file` | Test                                                                    | No        |
+| `--until star`            | Stop the pipeline after the `star` jobs are all complete                | No        |
+
+
+
+
+
+```
+snakemake --use-conda --conda-frontend mamba --cores 8 -p 2>&1 | tee log.file
+```
+
+[Table of Contents](#toc)
