@@ -23,14 +23,15 @@ import subprocess
 import yaml
 import snakemake
 
-# set configuration file
-configfile: "workflow/resources/config.yaml"
 
-# define input directory from config
-INPUT_DIR = os.path.join(config['input_dir']['fastq'],'')
-
-# define analysis directory and other directories
+# define SNKDIR
 SNK_DIR = os.path.dirname(srcdir("Snakefile"))
+
+# set configuration file
+configfile: os.path.join(SNK_DIR,"resources/config.yaml")
+
+# define directories
+INPUT_DIR = os.path.join(config['input_dir']['fastq'],'')
 SCRIPT_DIR = os.path.join(SNK_DIR,'scripts','')
 OUT_DIR = os.path.join(config['out_dir'],'')
 QC_DIR = os.path.join(OUT_DIR, 'QC','')
