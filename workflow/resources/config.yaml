@@ -1,5 +1,5 @@
 out_dir:
-    '/Users/csifuentes/Documents/outDataSnakemakeOfficeHours'
+    '/Users/csifuentes/Documents/outData'
 input_dir:
     fastq: '/Users/csifuentes/Documents/testData/simulated_reads/fastq'
     genome_fasta: '/Users/csifuentes/Documents/testData/index/'
