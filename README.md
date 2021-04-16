@@ -67,6 +67,8 @@ workflow
 |(input_dir) `fastq:`|Directory containing input reads|Full path to directory|
 |(input_dir) `genome_fasta:`|Directory containing `STAR` index files|Full path to directory|
 |(input_dir) `genome_gtf:`|GTF file used to build the `STAR` index|Full path to file|
+|(read_info) `fastq_suffix:` | Whether the file uses `fastq` or `fq` in its name | String, either `fastq` or `fq` |
+|(read_info) `r1_suffix:` | The string that designates read 1 files, either `_1` or `_R1` or something similar. Without any leading or trailing characters. | String, `_1` or `_R1` usually, no extra `.` or other characters|
 |(thread_info) `fastqc:`| Number of threads to use for each `FastQC` job |Integer |
 |(thread_info) `align:` |Number of threads to use for each `STAR` job|Integer|
 |(thread_info) `counts:` |Number of threads to use for each `featureCounts` job|Integer |
@@ -79,11 +81,14 @@ workflow
 Example `config.yaml`
 
     out_dir:
-        '/Users/csifuentes/Documents/outDataSnakemakeOfficeHours'
+        '/Users/csifuentes/Documents/outData'
     input_dir:
         fastq: '/Users/csifuentes/Documents/testData/simulated_reads/fastq'
         genome_fasta: '/Users/csifuentes/Documents/testData/index/'
         genome_gtf: '/Users/csifuentes/Documents/testData/index/Homo_sapiens.GRCh38.103.gtf'
+    read_info:
+        fastq_suffix: 'fastq'
+        r1_suffix: '_1' 
     thread_info:
         fastqc: 4
         align: 4
@@ -98,10 +103,9 @@ Example `config.yaml`
         metadata: '/Users/csifuentes/Documents/repo/snakemake-demo-rnaseq/workflow/resources/metadata.txt'
 
 
-
 **Key Assumptions**
-- Files end in `.fastq`, and are unzipped.
-- Paired-end reads, with `_1.fastq` and `_2.fastq` as the suffix.
+- Files are gzipped, ending with `.gz`.
+- Paired-end reads.
 - Only 2 groups to compare (WT vs KO, or T0 vs T24, etc.)
 
 

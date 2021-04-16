@@ -40,10 +40,14 @@ ALN_DIR = os.path.join(OUT_DIR, 'ALIGN', '')
 COUNTS_DIR = os.path.join(OUT_DIR, 'COUNTS', '')
 DIFFEX_DIR = os.path.join(OUT_DIR, 'DIFFEX','')
 
+# grab read info
+SUFFIX = config['read_info']['fastq_suffix'] + '.gz'
+R1_SUFFIX = config['read_info']['r1_suffix'] + '.' + SUFFIX
+
 #define lists of files and sample basenames
-FILES = [os.path.basename(x) for x in glob.glob(INPUT_DIR + '*.fastq')]
-FILES_BASE = [os.path.basename(x).split('.fastq')[0] for x in glob.glob(INPUT_DIR + '*.fastq')]
-SAMPLES = [os.path.basename(x).split('_1.fastq')[0] for x in fnmatch.filter(FILES, '*_1.fastq')]
+FILES = [os.path.basename(x) for x in glob.glob(INPUT_DIR + '*' + SUFFIX)]
+FILES_BASE = [os.path.basename(x).split('.'+ SUFFIX)[0] for x in glob.glob(INPUT_DIR + '*' + SUFFIX)]
+SAMPLES = [os.path.basename(x).split(R1_SUFFIX)[0] for x in fnmatch.filter(FILES, '*' + R1_SUFFIX)]
 
 #define final outputs
 rule all:
@@ -70,7 +74,7 @@ rule all:
 #fastqc
 rule fastqc:
     input:
-        fastq = INPUT_DIR + '{sample}.fastq'
+        fastq = INPUT_DIR + '{sample}' + '.' + SUFFIX
     output:
         fastq = QC_DIR + '{sample}_fastqc.zip'
     params:
@@ -94,8 +98,8 @@ rule fastqc:
 #trim_galore
 rule trim_galore:
     input:
-        r1 = INPUT_DIR + '{sample}_1.fastq',
-        r2 = INPUT_DIR + '{sample}_2.fastq'
+        r1 = INPUT_DIR + '{sample}_1' + '.' + SUFFIX,
+        r2 = INPUT_DIR + '{sample}_2' + '.' + SUFFIX,
     output:
         r1 = TRIM_DIR + '{sample}_val_1.fq',
         r2 = TRIM_DIR + '{sample}_val_2.fq',
@@ -113,6 +117,7 @@ rule trim_galore:
         --length {params.length} \
         --basename {params.base} \
         -o {params.out_dir} \
+        --dont_gzip \
         --paired {input.r1} {input.r2}
         """
 

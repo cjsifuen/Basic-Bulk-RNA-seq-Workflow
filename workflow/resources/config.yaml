@@ -4,6 +4,9 @@ input_dir:
     fastq: '/Users/csifuentes/Documents/testData/simulated_reads/fastq'
     genome_fasta: '/Users/csifuentes/Documents/testData/index/'
     genome_gtf: '/Users/csifuentes/Documents/testData/index/Homo_sapiens.GRCh38.103.gtf'
+read_info:
+    fastq_suffix: 'fastq'
+    r1_suffix: '_1' 
 thread_info:
     fastqc: 4
     align: 4
