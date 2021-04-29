@@ -1,0 +1,23 @@
+# FINAL_OUTPUTS.extend(x) adds "x" to the FINAL_OUTPUTS list
+FINAL_OUTPUTS.extend([expand('{directory}{prefix}{extension}',
+                        directory=DIFFEX_DIR,
+                        prefix=config['diffex_info']['prefix'],
+                        extension=['_normCounts.txt','_results.txt','_sigdiff.txt','_vstCounts.txt'])])
+
+#DESeq2
+rule deseq2:
+    input:
+        counts = COUNTS_DIR + 'counts_fixed.txt'
+    output:
+        diffex = expand('{directory}{prefix}{extension}',
+                        directory=DIFFEX_DIR,
+                        prefix=config['diffex_info']['prefix'],
+                        extension=['_normCounts.txt','_results.txt','_sigdiff.txt','_vstCounts.txt'])
+    params:
+        out_prefix = DIFFEX_DIR + config['diffex_info']['prefix'],
+        script = SCRIPT_DIR + 'DESeq2.R',
+        metadata = config['diffex_info']['metadata']
+    shell:
+        """
+        Rscript {params.script} {params.metadata} {input.counts} {params.out_prefix}
+        """

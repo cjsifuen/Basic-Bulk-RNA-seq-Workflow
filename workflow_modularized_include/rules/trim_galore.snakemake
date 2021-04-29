@@ -1,0 +1,31 @@
+# FINAL_OUTPUTS.extend(x) adds "x" to the FINAL_OUTPUTS list
+FINAL_OUTPUTS.extend([expand('{directory}{sample}{extension}',
+                  directory = TRIM_DIR,
+                  sample = SAMPLES,
+                  extension = ['_val_1.fq','_val_2.fq'])])
+
+#trim_galore
+rule trim_galore:
+    input:
+        r1 = INPUT_DIR + '{sample}_1' + '.' + SUFFIX,
+        r2 = INPUT_DIR + '{sample}_2' + '.' + SUFFIX,
+    output:
+        r1 = TRIM_DIR + '{sample}_val_1.fq',
+        r2 = TRIM_DIR + '{sample}_val_2.fq',
+    conda:
+        '../envs/trim_galore_env.yml'
+    params:
+        length = config['trim_info']['length'],
+        quality = config['trim_info']['quality'],
+        base = '{sample}',
+        out_dir = TRIM_DIR
+    shell:
+        """
+        trim_galore \
+        -q {params.quality} \
+        --length {params.length} \
+        --basename {params.base} \
+        -o {params.out_dir} \
+        --dont_gzip \
+        --paired {input.r1} {input.r2}
+        """

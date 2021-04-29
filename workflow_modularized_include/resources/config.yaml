@@ -1,0 +1,22 @@
+out_dir:
+    '/Users/csifuentes/Documents/outDataModularInclude'
+input_dir:
+    fastq: '/Users/csifuentes/Documents/testData/simulated_reads/fastq'
+    genome_fasta: '/Users/csifuentes/Documents/testData/index/'
+    genome_gtf: '/Users/csifuentes/Documents/testData/index/Homo_sapiens.GRCh38.103.gtf'
+read_info:
+    fastq_suffix: 'fastq'
+    r1_suffix: '_1' 
+thread_info:
+    fastqc: 4
+    align: 4
+    counts: 4
+trim_info:
+    tool: 'fastp'
+    length: 20
+    quality: 30
+count_info:
+    strand: 0
+diffex_info:
+    prefix: 'WT_vs_KO'
+    metadata: '/Users/csifuentes/Documents/repo/Basic-Bulk-RNA-seq-Workflow/workflow_modularized/resources/metadata.txt'

@@ -1,0 +1,35 @@
+# FINAL_OUTPUTS.extend(x) adds "x" to the FINAL_OUTPUTS list
+FINAL_OUTPUTS.extend([COUNTS_DIR + 'counts.txt',])
+
+#featureCounts
+rule featureCounts:
+    input:
+        bams = sorted(expand('{directory}{sample}{extension}',
+                      directory=ALN_DIR,
+                      sample=SAMPLES,
+                      extension='Aligned.sortedByCoord.out.bam')),
+    output:
+        counts = COUNTS_DIR + 'counts.txt',
+        tmp = temp(COUNTS_DIR + 'counts.tmp'),
+    conda:
+        '../envs/subread_env.yml'
+    params:
+        strand = config['count_info']['strand'],
+        gtf = config['input_dir']['genome_gtf']
+    threads:
+        config['thread_info']['counts']
+    shell:
+        """
+        featureCounts \
+        -O \
+        -p \
+        -B \
+        -C \
+        -T {threads} \
+        -s {params.strand} \
+        -a {params.gtf} \
+        -o {output.tmp} \
+        {input.bams}
+
+        sed '/^#/d' {output.tmp} | cut -f 1,7- > {output.counts}
+        """

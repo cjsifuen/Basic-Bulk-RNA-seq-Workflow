@@ -1,0 +1,7 @@
+channels:
+  - bioconda
+  - defaults
+dependencies:
+  - fastp=0.20.1
+  - libcxx=10.0.0
+  - zlib=1.2.11
