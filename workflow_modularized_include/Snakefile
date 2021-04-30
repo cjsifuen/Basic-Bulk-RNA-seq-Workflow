@@ -67,6 +67,7 @@ include: 'rules/clean_counts.snakemake'
 include: 'rules/deseq2.snakemake'
 include: 'rules/read_duplication_qc.snakemake'
 include: 'rules/read_gc_qc.snakemake'
+include: 'rules/multiqc.snakemake'
 
 #rule all
 rule all:

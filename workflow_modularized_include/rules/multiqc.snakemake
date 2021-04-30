@@ -1,0 +1,52 @@
+FINAL_OUTPUTS.extend([QC_DIR + 'multiqc_report.html',])
+
+rule multiqc:
+    input:
+        sorted(expand('{directory}{sample}{extension}',
+               directory = QC_DIR,
+               sample = FILES_BASE,
+               extension = '_fastqc.zip')),
+        sorted(expand('{directory}{sample}{extension}',
+               directory = ALN_DIR,
+               sample = SAMPLES,
+               extension = 'Aligned.sortedByCoord.out.bam')),
+        sorted(expand('{directory}{sample}{extension}',
+               directory = QC_DIR,
+               sample = SAMPLES,
+               extension = ['.GC.xls',
+                            '.GC_plot.r',
+                            '.GC_plot.pdf'])),
+        sorted(expand('{directory}{sample}{extension}',
+                  directory = TRIM_DIR,
+                  sample = SAMPLES,
+                  extension = ['.html','.json'])),
+        sorted(expand('{directory}{sample}{extension}',
+                  directory = TRIM_DIR,
+                  sample = SAMPLES,
+                  extension = ['_val_1.fq','_val_2.fq'])),
+        sorted(expand('{directory}{sample}{extension}',
+               directory = QC_DIR,
+               sample = SAMPLES,
+               extension = ['.pos.DupRate.xls',
+                            '.seq.DupRate.xls',
+                            '.DupRate_plot.r',
+                            '.DupRate_plot.pdf'])),
+        COUNTS_DIR + 'counts.txt'
+    output:
+        report(QC_DIR + 'multiqc_report.html'),
+    params:
+        QC_DIR,
+        TRIM_DIR,
+        ALN_DIR,
+        COUNTS_DIR
+    conda:
+        '../envs/multiqc_env.yml'
+    shell:
+        """
+        multiqc \
+        --force \
+        -s \
+        --interactive \
+        -n {output} \
+        {params}
+        """
