@@ -16,7 +16,7 @@ rule fastp:
     output:
         r1 = TRIM_DIR + '{sample}_val_1.fq',
         r2 = TRIM_DIR + '{sample}_val_2.fq',   
-        h = TRIM_DIR + '{sample}.html',
+        h = report(TRIM_DIR + '{sample}.html', category = 'Read Trimming'),
         j = TRIM_DIR + '{sample}.json'
     conda:
         '../envs/fastp_env.yml'

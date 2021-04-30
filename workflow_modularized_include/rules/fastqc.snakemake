@@ -9,7 +9,7 @@ rule fastqc:
     input:
         fastq = INPUT_DIR + '{sample}' + '.' + SUFFIX
     output:
-        fastq = QC_DIR + '{sample}_fastqc.zip'
+        fastq = report(QC_DIR + '{sample}_fastqc.zip', category = 'Read QC')
     params:
         qc_dir = QC_DIR,
         format = 'fastq',

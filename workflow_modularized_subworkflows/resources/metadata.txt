@@ -1,7 +1,0 @@
-sample_id	expt
-sample_01	WT
-sample_02	WT
-sample_03	WT
-sample_04	KO
-sample_05	KO
-sample_06	KO

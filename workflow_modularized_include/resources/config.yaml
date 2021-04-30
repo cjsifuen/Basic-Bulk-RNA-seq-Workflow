@@ -19,4 +19,4 @@ count_info:
     strand: 0
 diffex_info:
     prefix: 'WT_vs_KO'
-    metadata: '/Users/csifuentes/Documents/repo/Basic-Bulk-RNA-seq-Workflow/workflow_modularized/resources/metadata.txt'
+    metadata: '/Users/csifuentes/Documents/repo/Basic-Bulk-RNA-seq-Workflow/workflow_modularized_include/resources/metadata.txt'

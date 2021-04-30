@@ -1,0 +1,30 @@
+# FINAL_OUTPUTS.extend(x) adds "x" to the FINAL_OUTPUTS list
+FINAL_OUTPUTS.extend([expand('{directory}{sample}{extension}',
+               directory = QC_DIR,
+               sample = SAMPLES,
+               extension = ['.pos.DupRate.xls',
+                            '.seq.DupRate.xls',
+                            '.DupRate_plot.r',
+                            '.DupRate_plot.pdf'])])
+
+#read_duplication_qc
+rule read_duplication_qc:
+    input:
+        bam = ALN_DIR + '{sample}Aligned.sortedByCoord.out.bam',
+    output:
+        pos_dup = QC_DIR + '{sample}.pos.DupRate.xls',
+        seq_dup = QC_DIR + '{sample}.seq.DupRate.xls',
+        dup_script = QC_DIR + '{sample}.DupRate_plot.r',
+        plot = report(QC_DIR + '{sample}.DupRate_plot.pdf', category='Read QC')
+    params:
+        prefix = QC_DIR + '{sample}',
+    conda:
+        '../envs/rseqc_env.yml'
+    threads:
+        config['thread_info']['fastqc']
+    shell:
+        """
+        read_duplication.py \
+        -i {input.bam} \
+        -o {params.prefix}
+        """

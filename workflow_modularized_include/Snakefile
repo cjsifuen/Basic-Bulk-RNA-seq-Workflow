@@ -27,7 +27,7 @@ import snakemake
 # define SNKDIR
 SNK_DIR = os.path.dirname(srcdir("Snakefile"))
 
-# set configuration file
+# set configuration file and report file
 configfile: os.path.join(SNK_DIR,"resources/config.yaml")
 
 # define directories
@@ -65,6 +65,8 @@ include: 'rules/star.snakemake'
 include: 'rules/feature_counts.snakemake'
 include: 'rules/clean_counts.snakemake'
 include: 'rules/deseq2.snakemake'
+include: 'rules/read_duplication_qc.snakemake'
+include: 'rules/read_gc_qc.snakemake'
 
 #rule all
 rule all:
