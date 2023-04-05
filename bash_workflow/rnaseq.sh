@@ -20,56 +20,56 @@ METADATA='/Users/csifuentes/Documents/repo/snakemake-demo-rnaseq/bash_workflow/m
 OUTPREFIX='WT_vs_KO'
 DIFFEX_DIR='/Users/csifuentes/Documents/outDataOfficeHours/DIFFEX/'
 
-# ###
-# #fastqc
-# ###
+###
+#fastqc
+###
 
-# #activate conda env
-# conda init bash
-# source ~/.bash_profile
-# conda activate fastqc_env
+#activate conda env
+conda init bash
+source ~/.bash_profile
+conda activate fastqc_env
 
-# #make output directory
-# mkdir -p ${QC_DIR}
+#make output directory
+mkdir -p ${QC_DIR}
 
-# #fastqc on each file
-# for i in ${IN_DIR}/*.fastq;
-# do BASE=$(basename ${i} '.fastq');
-#     echo ${BASE};
-#     fastqc \
-#     -o ${QC_DIR} \
-#     --noextract \
-#     -f fastq \
-#     -t 4 \
-#     ${i};
-# done
+#fastqc on each file
+for i in ${IN_DIR}/*.fastq;
+do BASE=$(basename ${i} '.fastq');
+    echo ${BASE};
+    fastqc \
+    -o ${QC_DIR} \
+    --noextract \
+    -f fastq \
+    -t 4 \
+    ${i};
+done
 
-# #deactivate environment
-# conda deactivate
+#deactivate environment
+conda deactivate
 
 
-# ###
-# #trimgalore!
-# ###
+###
+#trimgalore!
+###
 
-# #activate conda env
-# source ~/.bash_profile
-# conda activate trim_galore_env
+#activate conda env
+source ~/.bash_profile
+conda activate trim_galore_env
 
-# #trimgalore! on each file
-# for i in ${IN_DIR}/*_1.fastq;
-# do BASE=$(basename ${i} '_1.fastq');
-#     echo ${BASE};
-#     trim_galore \
-#     -q ${TRIM_QUALITY} \
-#     --length ${TRIM_LENGTH} \
-#     --basename ${BASE} \
-#     -o ${TRIM_DIR} \
-#     --paired ${IN_DIR}/${BASE}_1.fastq ${IN_DIR}/${BASE}_2.fastq;
-# done
+#trimgalore! on each file
+for i in ${IN_DIR}/*_1.fastq;
+do BASE=$(basename ${i} '_1.fastq');
+    echo ${BASE};
+    trim_galore \
+    -q ${TRIM_QUALITY} \
+    --length ${TRIM_LENGTH} \
+    --basename ${BASE} \
+    -o ${TRIM_DIR} \
+    --paired ${IN_DIR}/${BASE}_1.fastq ${IN_DIR}/${BASE}_2.fastq;
+done
 
-# # deactivate environment
-# conda deactivate
+# deactivate environment
+conda deactivate
 
 ###
 #star
